@@ -47,3 +47,14 @@ export const profileController=async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 }
+
+export const logoutController=async (req, res) => {
+    try {
+        const token=req.cookies.token || req.headers.authorization.split(' ')[1];
+        redis.set(token, 'logout','EX',60*60*24);
+        res.clearCookie('token');
+        res.status(200).json({ message: 'Logout successful' });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
