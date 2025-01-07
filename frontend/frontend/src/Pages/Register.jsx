@@ -1,13 +1,13 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState,useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Sun, Moon, Mail, Lock } from 'lucide-react';
 import axios from '../config/axios';
+import { UserContext } from '../context/user.context';
 
-// Define the schema using zod
 const schema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters long' })
@@ -18,6 +18,7 @@ const Register = () => {
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema)
   });
+  const { setuser } = useContext(UserContext);
   const navigate = useNavigate();
 
   const onSubmit = async (data) => {
@@ -28,6 +29,8 @@ const Register = () => {
         password: data.password
       });
       console.log('Response data:', response.data);
+      localStorage.setItem('user', JSON.stringify(response.data));
+      setuser(response.data);
       navigate('/');
     } catch (error) {
       console.error('Error:', error);

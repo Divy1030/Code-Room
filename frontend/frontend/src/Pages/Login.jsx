@@ -1,38 +1,44 @@
 import React from 'react';
-import { useState } from 'react';
-import { Link,useNavigate } from 'react-router-dom';
+import { useState,useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Sun, Moon, Mail, Lock } from 'lucide-react';
 import axios from '../config/axios';
+import {UserContext} from '../context/user.context';
 
-// Define the schema using zod
+
 const schema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters long' })
 });
 
 const Login = () => {
-  const [email,setEmail] = useState('');
-  const [password,setPassword] = useState('');
   const [isDark, setIsDark] = useState(true);
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema)
   });
+  const { setUser } = useContext(UserContext);
+  const navigate = useNavigate();
 
-  const onSubmit = (data) => {
-    // Handle login logic here
+  const onSubmit = async (data) => {
     console.log('Login attempt with:', data);
-    axios.post('/users/login', {
-      email: email,
-      password: password
-    }).then((response) => {
-      console.log(response.data);
-      navigate('/')
-    }).catch((error) => {
-      console.error(error);
-    });
+    try {
+      const response = await axios.post('/users/login', {
+        email: data.email,
+        password: data.password
+      });
+      console.log('Response data:', response.data);
+      localStorage.setItem('user', JSON.stringify(response.data));
+      setUser(response.data);
+      navigate('/');
+    } catch (error) {
+      console.error('Error:', error);
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+      }
+    }
   };
 
   const toggleTheme = () => {
@@ -63,10 +69,8 @@ const Login = () => {
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
-              
                 type="email"
                 {...register('email')}
-                onChange={(e) => setEmail(e.target.value)}
                 className={`w-full pl-10 pr-4 py-2 rounded-lg outline-none ${
                   isDark 
                     ? 'bg-gray-700 focus:ring-2 focus:ring-blue-500' 
@@ -86,7 +90,6 @@ const Login = () => {
               <input
                 type="password"
                 {...register('password')}
-                onChange={(e) => setPassword(e.target.value)}
                 className={`w-full pl-10 pr-4 py-2 rounded-lg outline-none ${
                   isDark 
                     ? 'bg-gray-700 focus:ring-2 focus:ring-blue-500' 
