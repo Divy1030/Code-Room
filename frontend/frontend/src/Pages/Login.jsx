@@ -30,7 +30,7 @@ const Login = () => {
         password: data.password
       });
       console.log('Response data:', response.data);
-      localStorage.setItem('user', JSON.stringify(response.data));
+      localStorage.setItem('token', response.data.token);
       setUser(response.data);
       navigate('/');
     } catch (error) {
