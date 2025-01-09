@@ -70,7 +70,7 @@ const Home = () => {
           <div key={project._id} 
           className="project flex flex-col gap-2 p-4 border border-gray-200 
           rounded-md shadow-md cursor-pointer min-w-52 hover:bg-slate-300"
-          onClick={() => navigate(`/project`,project._id)}
+          onClick={() => navigate(`/project/${project._id}`, { state: { project } })}
           >
             <h2 className="font-semibold">{project.name}</h2>
             <div className="flex flex-wrap gap-2">
