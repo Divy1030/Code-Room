@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import axios from "../config/axios";
 
 const Project = () => {
   const location = useLocation();
@@ -11,24 +12,22 @@ const Project = () => {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState([]);
+  const [users, setUsers] = useState([]);
 
   const handleUserClick = (userId) => {
     setSelectedUserId([...selectedUserId, userId]);
   };
 
-  // Dummy data for users
-  const dummyUsers = [
-    "user1@example.com",
-    "user2@example.com",
-    "user3@example.com",
-    "user4@example.com",
-    "user5@example.com",
-    "user6@example.com",
-    "user7@example.com",
-    "user8@example.com",
-    "user9@example.com",
-    "user10@example.com",
-  ];
+  useEffect(() => {
+    axios.get("/users/all-user")
+      .then((response) => {
+        console.log("Users fetched:", response.data);
+        setUsers(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching users:", error);
+      });
+  }, []);
 
   return (
     <main className="h-screen w-screen flex">
@@ -102,16 +101,16 @@ const Project = () => {
               </button>
             </header>
             <div className="users-list flex flex-col gap-2 mb-16 max-h-96 overflow-auto">
-              {dummyUsers.map((user, index) => (
+              {users.map((user) => (
                 <div
-                  key={index}
-                  className={`user cursor-pointer hover:bg-slate-200 ${selectedUserId.includes(user) ? 'bg-slate-200' : ''} p-2 flex gap-2 items-center`}
-                  onClick={() => handleUserClick(user)}
+                  key={user._id}
+                  className={`user cursor-pointer hover:bg-slate-200 ${selectedUserId.includes(user._id) ? 'bg-slate-200' : ''} p-2 flex gap-2 items-center`}
+                  onClick={() => handleUserClick(user._id)}
                 >
                   <div className='aspect-square relative rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600'>
                     <i className="ri-user-fill absolute"></i>
                   </div>
-                  <h1 className='font-semibold text-lg'>{user}</h1>
+                  <h1 className='font-semibold text-lg'>{user.email}</h1>
                 </div>
               ))}
             </div>
