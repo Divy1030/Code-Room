@@ -5,7 +5,7 @@ import axios from "../config/axios";
 const Project = () => {
   const location = useLocation();
   const { state } = location;
-  const { project } = state || {}; // Destructure project from state
+  const { project } = state || {};
 
   console.log("Project from state:", project);
 
@@ -31,7 +31,7 @@ const Project = () => {
     axios
       .put("/projects/add-user", {
         projectId: projectData._id,
-        users: Array.from(selectedUserId), // Convert Set to Array
+        users: Array.from(selectedUserId),
       })
       .then((res) => {
         console.log(res.data);
@@ -48,7 +48,7 @@ const Project = () => {
         .get(`/projects/get-project/${project._id}`)
         .then((res) => {
           console.log("Project data fetched:", res.data);
-          setProjectData(res.data.project); // Access the project object
+          setProjectData(res.data.project);
           console.log("Project name:", res.data.project.name);
           console.log("Project users:", res.data.project.users);
         })
