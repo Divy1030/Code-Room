@@ -11,12 +11,32 @@ const Project = () => {
 
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState(new Set());
   const [users, setUsers] = useState([]);
 
-  const handleUserClick = (userId) => {
-    setSelectedUserId([...selectedUserId, userId]);
+  const handleUserClick = (id) => {
+    setSelectedUserId(prevSelectedUserId => {
+      const newSelectedUserId = new Set(prevSelectedUserId);
+      if (newSelectedUserId.has(id)) {
+        newSelectedUserId.delete(id);
+      } else {
+        newSelectedUserId.add(id);
+      }
+      return newSelectedUserId;
+    });
   };
+
+  function addCollaborators() {
+    axios.put("/projects/add-user", {
+      projectId: project._id,
+      users: Array.from(selectedUserId) // Convert Set to Array
+    }).then(res => {
+      console.log(res.data);
+      setIsModalOpen(false);
+    }).catch(err => {
+      console.log(err);
+    });
+  }
 
   useEffect(() => {
     axios.get("/users/all-user")
@@ -104,7 +124,7 @@ const Project = () => {
               {users.map((user) => (
                 <div
                   key={user._id}
-                  className={`user cursor-pointer hover:bg-slate-200 ${selectedUserId.includes(user._id) ? 'bg-slate-200' : ''} p-2 flex gap-2 items-center`}
+                  className={`user cursor-pointer hover:bg-slate-200 ${selectedUserId.has(user._id) ? 'bg-slate-200' : ''} p-2 flex gap-2 items-center`}
                   onClick={() => handleUserClick(user._id)}
                 >
                   <div className='aspect-square relative rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600'>
@@ -116,7 +136,7 @@ const Project = () => {
             </div>
             <button
               className='absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-blue-600 text-white rounded-md'
-              onClick={() => setIsModalOpen(false)}
+              onClick={addCollaborators}
             >
               Add Collaborators
             </button>
