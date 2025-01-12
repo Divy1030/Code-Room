@@ -95,16 +95,18 @@ const Project = () => {
 
     // Cleanup function to remove the event listener
     return () => {
-      receiceMessage("project-message", handleMessage);
+      // Properly remove the event listener
+      socket.off("project-message", handleMessage);
     };
   }, [project._id]);
 
   function appendIncomingMessage(messageObject) {
     if (messageBox.current) {
+      const senderText = messageObject.sender === user.user.email ? "ME" : messageObject.sender;
       const message = document.createElement("div");
       message.classList.add("message", "max-w-56", "flex", "flex-col", "gap-1", "p-2", "bg-slate-200", "w-fit", "rounded-md");
       message.innerHTML = `
-        <small class="text-xs opacity-65">${messageObject.sender}</small>
+        <small class="text-xs opacity-65">${senderText}</small>
         <p class="text-sm">${messageObject.message}</p>
       `;
       messageBox.current.appendChild(message);
@@ -116,10 +118,11 @@ const Project = () => {
 
   function appendOutgoingMessage(messageObject) {
     if (messageBox.current) {
+      const senderText = messageObject.sender === user.user.email ? "ME" : messageObject.sender;
       const message = document.createElement("div");
       message.classList.add("ml-auto", "message", "max-w-56", "flex", "flex-col", "gap-1", "p-2", "bg-slate-200", "w-fit", "rounded-md");
       message.innerHTML = `
-        <small class="text-xs opacity-65">${messageObject.sender}</small>
+        <small class="text-xs opacity-65">${senderText}</small>
         <p class="text-sm">${messageObject.message}</p>
       `;
       messageBox.current.appendChild(message);
@@ -130,7 +133,7 @@ const Project = () => {
   }
 
   function scrollToBottom() {
-    messageBox.current.scrollTop = messageBox.current.scrollHeight
+    messageBox.current.scrollTop = messageBox.current.scrollHeight;
   }
 
   return (
