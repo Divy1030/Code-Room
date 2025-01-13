@@ -139,7 +139,7 @@ const Project = () => {
   return (
     <main className="h-screen w-screen flex">
       <section className="left relative flex flex-col h-full min-w-96 bg-slate-400">
-        <header className="flex justify-between items-center p-2 px-4 w-full bg-slate-300 absolute top-0">
+        <header className="flex justify-between items-center p-2 px-4 w-full bg-slate-300 absolute top-0 z-10">
           <button className="flex gap-2" onClick={() => setIsModalOpen(true)}>
             <i className="ri-add-fill mr-1 "></i>
             <p>Add Collaborators</p>
@@ -152,7 +152,7 @@ const Project = () => {
           </button>
         </header>
 
-        <div className="conversion-area pt-14 pb-10 flex-grow flex flex-col h-full relative">
+        <div className="conversion-area pt-14 pb-10 flex-grow flex flex-col h-full relative z-0">
           <div 
           ref={messageBox}
           className="message-box flex-grow flex flex-col gap-1 p-1 overflow-auto max-h-full">
@@ -174,7 +174,7 @@ const Project = () => {
         <div
           className={`sidePanel flex flex-col gap-2 w-full h-full bg-slate-200 absolute transition-all ${
             isSidePanelOpen ? "translate-x-0" : "-translate-x-full"
-          } top-0`}
+          } top-0 z-10`}
         >
           <header className="flex justify-end p-2 px-3 bg-slate-300">
             <button
@@ -204,7 +204,7 @@ const Project = () => {
       </section>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <div className="bg-white p-4 rounded-md w-96 max-w-full relative">
             <header className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Select User</h2>
