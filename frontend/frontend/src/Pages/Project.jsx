@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import axios from "../config/axios";
 import { intializeSocket, receiceMessage, sendMessage } from "../config/socket";
 import { UserContext } from '../context/user.context.jsx';
+import Markdown from 'markdown-to-jsx';
 
 const Project = () => {
   const location = useLocation();
@@ -15,6 +16,7 @@ const Project = () => {
   const [users, setUsers] = useState([]);
   const [projectData, setProjectData] = useState(project);
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
   const { user } = useContext(UserContext);
   const messageBox = useRef(null);
 
@@ -52,12 +54,12 @@ const Project = () => {
 
     const messageObject = {
       message,
-      sender: user.user.email,
+      sender: user.user,
     };
 
     sendMessage("project-message", messageObject);
     console.log("User ID:", user.user._id);
-    appendOutgoingMessage(messageObject);
+    setMessages((prevMessages) => [...prevMessages, messageObject]);
     setMessage('');
   }
 
@@ -66,7 +68,7 @@ const Project = () => {
 
     const handleMessage = (data) => {
       console.log("Received message:", data);
-      appendIncomingMessage(data);
+      setMessages((prevMessages) => [...prevMessages, data]);
     };
 
     receiceMessage("project-message", handleMessage);
@@ -100,40 +102,14 @@ const Project = () => {
     };
   }, [project._id]);
 
-  function appendIncomingMessage(messageObject) {
-    if (messageBox.current) {
-      const senderText = messageObject.sender === user.user.email ? "ME" : messageObject.sender;
-      const message = document.createElement("div");
-      message.classList.add("message", "max-w-56", "flex", "flex-col", "gap-1", "p-2", "bg-slate-200", "w-fit", "rounded-md");
-      message.innerHTML = `
-        <small class="text-xs opacity-65">${senderText}</small>
-        <p class="text-sm">${messageObject.message}</p>
-      `;
-      messageBox.current.appendChild(message);
-      scrollToBottom();
-    } else {
-      console.error("messageBox ref is not assigned");
-    }
-  }
-
-  function appendOutgoingMessage(messageObject) {
-    if (messageBox.current) {
-      const senderText = messageObject.sender === user.user.email ? "ME" : messageObject.sender;
-      const message = document.createElement("div");
-      message.classList.add("ml-auto", "message", "max-w-56", "flex", "flex-col", "gap-1", "p-2", "bg-slate-200", "w-fit", "rounded-md");
-      message.innerHTML = `
-        <small class="text-xs opacity-65">${senderText}</small>
-        <p class="text-sm">${messageObject.message}</p>
-      `;
-      messageBox.current.appendChild(message);
-      scrollToBottom();
-    } else {
-      console.error("messageBox ref is not assigned");
-    }
-  }
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   function scrollToBottom() {
-    messageBox.current.scrollTop = messageBox.current.scrollHeight;
+    if (messageBox.current) {
+      messageBox.current.scrollTop = messageBox.current.scrollHeight;
+    }
   }
 
   return (
@@ -156,6 +132,29 @@ const Project = () => {
           <div 
           ref={messageBox}
           className="message-box flex-grow flex flex-col gap-1 p-1 overflow-auto max-h-full">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`message max-w-56 flex flex-col gap-1 p-2 bg-slate-200 w-fit rounded-md ${
+                  msg.sender.email === user.user.email ? "ml-auto max-w-54" : "max-w-80"
+                }`}
+              >
+                <small className="text-xs opacity-65">
+                  {msg.sender.email === user.user.email ? "ME" : msg.sender.email}
+                </small>
+                <p className="text-sm">
+                  {msg.sender._id === "ai" ? 
+                  <div
+                  className="overflow-auto bg-slate-900 text-white rounded-sm p-2"
+                  >
+                    <Markdown>{msg.message}</Markdown>
+                  </div>
+                   : (
+                    msg.message
+                  )}
+                </p>
+              </div>
+            ))}
           </div>
           <div className="inputfeild w-full flex absolute bottom-0">
             <input
