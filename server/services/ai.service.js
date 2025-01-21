@@ -106,12 +106,7 @@ export const generateResult = async (prompt) => {
       const response = result.response.candidates[0];
       console.log("Extracted response:", response); // Log the extracted response to debug
       if (response.content && response.content.parts && response.content.parts.length > 0) {
-        const cleanedResponse = JSON.parse(response.content.parts[0].text); // Parse the inner string
-        if (cleanedResponse.result) {
-          return cleanedResponse.result; // Return the cleaned result
-        } else {
-          return cleanedResponse.text; // Return the cleaned text
-        }
+        return response.content.parts[0].text; // Return the text directly
       } else {
         throw new Error("Unexpected response structure");
       }

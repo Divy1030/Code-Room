@@ -1,9 +1,29 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "../config/axios";
-import { intializeSocket, receiceMessage, sendMessage } from "../config/socket";
-import { UserContext } from '../context/user.context.jsx';
-import Markdown from 'markdown-to-jsx';
+import { initializeSocket, receiveMessage, sendMessage } from "../config/socket";
+import { UserContext } from "../context/user.context.jsx";
+import Markdown from "markdown-to-jsx";
+import hljs from "highlight.js";
+import "highlight.js/styles/github.css"; // Import a highlight.js style
+
+const SyntaxHighlightedCode = ({ children, className }) => {
+  const codeRef = useRef(null);
+
+  useEffect(() => {
+    if (codeRef.current) {
+      hljs.highlightElement(codeRef.current);
+    }
+  }, [children]);
+
+  return (
+    <pre>
+      <code ref={codeRef} className={className}>
+        {children}
+      </code>
+    </pre>
+  );
+};
 
 const Project = () => {
   const location = useLocation();
@@ -15,10 +35,21 @@ const Project = () => {
   const [selectedUserId, setSelectedUserId] = useState(new Set());
   const [users, setUsers] = useState([]);
   const [projectData, setProjectData] = useState(project);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const { user } = useContext(UserContext);
+  const [currentFile, setcurrentFile] = useState(null)
+  const [openFiles, setopenFiles] = useState([])
+  const [fileTree, setfileTree] = useState({
+    "app.js": {
+      content: "console.log('Hello World')",
+    },
+    "package.json": {
+      content: JSON.stringify({ name: "Croom", version: "1.0.0" }),
+    }
+  })
   const messageBox = useRef(null);
+  const socket = useRef(null);
 
   const handleUserClick = (id) => {
     setSelectedUserId((prevSelectedUserId) => {
@@ -60,18 +91,18 @@ const Project = () => {
     sendMessage("project-message", messageObject);
     console.log("User ID:", user.user._id);
     setMessages((prevMessages) => [...prevMessages, messageObject]);
-    setMessage('');
+    setMessage("");
   }
 
   useEffect(() => {
-    intializeSocket(project._id);
+    socket.current = initializeSocket(project._id);
 
     const handleMessage = (data) => {
       console.log("Received message:", data);
       setMessages((prevMessages) => [...prevMessages, data]);
     };
 
-    receiceMessage("project-message", handleMessage);
+    receiveMessage("project-message", handleMessage);
 
     if (project._id) {
       axios
@@ -98,7 +129,9 @@ const Project = () => {
     // Cleanup function to remove the event listener
     return () => {
       // Properly remove the event listener
-      socket.off("project-message", handleMessage);
+      if (socket.current) {
+        socket.current.off("project-message", handleMessage);
+      }
     };
   }, [project._id]);
 
@@ -112,6 +145,32 @@ const Project = () => {
     }
   }
 
+  function WriteAiMessage(message) {
+    try {
+      console.log("Raw message:", message);
+      const messageObject = JSON.parse(message);
+      console.log("Parsed message object:", messageObject);
+
+      return (
+        <div className="overflow-auto bg-slate-950 text-white rounded-sm p-2">
+          <Markdown
+            children={messageObject.text}
+            options={{
+              overrides: {
+                code: {
+                  component: SyntaxHighlightedCode,
+                },
+              },
+            }}
+          />
+        </div>
+      );
+    } catch (error) {
+      console.error("Error parsing message:", error);
+      return <p>Error parsing message</p>;
+    }
+  }
+
   return (
     <main className="h-screen w-screen flex">
       <section className="left relative flex flex-col h-full min-w-96 bg-slate-400">
@@ -120,18 +179,13 @@ const Project = () => {
             <i className="ri-add-fill mr-1 "></i>
             <p>Add Collaborators</p>
           </button>
-          <button
-            className="p-2"
-            onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
-          >
+          <button className="p-2" onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}>
             <i className="ri-group-fill"></i>
           </button>
         </header>
 
         <div className="conversion-area pt-14 pb-10 flex-grow flex flex-col h-full relative z-0">
-          <div 
-          ref={messageBox}
-          className="message-box flex-grow flex flex-col gap-1 p-1 overflow-auto max-h-full">
+          <div ref={messageBox} className="message-box flex-grow flex flex-col gap-1 p-1 overflow-auto max-h-full">
             {messages.map((msg, index) => (
               <div
                 key={index}
@@ -142,17 +196,9 @@ const Project = () => {
                 <small className="text-xs opacity-65">
                   {msg.sender.email === user.user.email ? "ME" : msg.sender.email}
                 </small>
-                <p className="text-sm">
-                  {msg.sender._id === "ai" ? 
-                  <div
-                  className="overflow-auto bg-slate-900 text-white rounded-sm p-2"
-                  >
-                    <Markdown>{msg.message}</Markdown>
-                  </div>
-                   : (
-                    msg.message
-                  )}
-                </p>
+                <div className="text-sm">
+                  {msg.sender._id === "ai" ? WriteAiMessage(msg.message) : <p>{msg.message}</p>}
+                </div>
               </div>
             ))}
           </div>
@@ -176,30 +222,65 @@ const Project = () => {
           } top-0 z-10`}
         >
           <header className="flex justify-end p-2 px-3 bg-slate-300">
-            <button
-              className="p-2"
-              onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
-            >
+            <button className="p-2" onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}>
               <i className="ri-close-fill"></i>
             </button>
           </header>
           <div className="users flex flex-col gap-2">
             {projectData.users &&
               projectData.users.map((user) => (
-                <div
-                  key={user._id}
-                  className="user cursor-pointer hover:bg-slate-200 p-2 flex gap-2 items-center"
-                >
+                <div key={user._id} className="user cursor-pointer hover:bg-slate-200 p-2 flex gap-2 items-center">
                   <div className="aspect-square rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600">
                     <i className="ri-user-fill absolute"></i>
                   </div>
-                  <h1 className="font-semibold text-lg text-black">
-                    {user.email}
-                  </h1>
+                  <h1 className="font-semibold text-lg text-black">{user.email}</h1>
                 </div>
               ))}
           </div>
         </div>
+      </section>
+
+      <section className="right bg-red-50 flex-grow h-full flex ">
+        <div className="explorer h-full max-w-64 min-w-52  bg-slate-300">
+          <div className="filetree">
+            {
+              Object.keys(fileTree).map((file,index)=>(
+                <button 
+                onClick={()=>{
+                  setcurrentFile(file)
+                    setopenFiles((prevOpenFiles) => Array.from(new Set([...prevOpenFiles, file])))
+                }}
+                className="tree-element cursor-pointer p-2 px-4 flex ">
+                  <p className="font-semibold text-lg">{file}</p>
+                </button>
+              ))
+            }
+          </div>
+        </div>
+        {currentFile && (
+        <div className="code-editor flex flex-col flex-grow h-full">
+          <div className="top">
+            {
+              openFiles.map((file,index)=>(
+                <button 
+                onClick={()=>setcurrentFile(file)}
+                className={`tab p-2 px-4 ${currentFile===file?"bg-slate-200":""}`}>
+                  <p className="font-semibold text-lg">{file}</p>
+                </button>
+              ))
+            }
+          </div>
+          <div className="bottom flex flex-grow">
+            {
+              <textarea 
+              value={fileTree[currentFile].content}
+              onChange={(e)=>setfileTree({...fileTree,[currentFile]:{content:e.target.value}})}
+              className="w-full h-full p-2 outline-none resize-none"
+              />
+            }
+          </div>
+        </div>
+      )}
       </section>
 
       {isModalOpen && (
