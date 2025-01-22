@@ -40,14 +40,7 @@ const Project = () => {
   const { user } = useContext(UserContext);
   const [currentFile, setcurrentFile] = useState(null)
   const [openFiles, setopenFiles] = useState([])
-  const [fileTree, setfileTree] = useState({
-    "app.js": {
-      content: "console.log('Hello World')",
-    },
-    "package.json": {
-      content: JSON.stringify({ name: "Croom", version: "1.0.0" }),
-    }
-  })
+  const [fileTree, setfileTree] = useState({})
   const messageBox = useRef(null);
   const socket = useRef(null);
 
@@ -98,7 +91,11 @@ const Project = () => {
     socket.current = initializeSocket(project._id);
 
     const handleMessage = (data) => {
-      console.log("Received message:", data);
+      // console.log("Received message:", data);
+      const message = JSON.parse(data.message);
+      if(message.fileTree){
+        setfileTree(message.fileTree)
+      }
       setMessages((prevMessages) => [...prevMessages, data]);
     };
 
@@ -147,7 +144,7 @@ const Project = () => {
 
   function WriteAiMessage(message) {
     try {
-      console.log("Raw message:", message);
+      // console.log("Raw message:", message);
       const messageObject = JSON.parse(message);
       console.log("Parsed message object:", messageObject);
 
@@ -273,8 +270,8 @@ const Project = () => {
           <div className="bottom flex flex-grow">
             {
               <textarea 
-              value={fileTree[currentFile].content}
-              onChange={(e)=>setfileTree({...fileTree,[currentFile]:{content:e.target.value}})}
+              value={fileTree[currentFile].file.contents}
+              onChange={(e)=>setfileTree({...fileTree,[currentFile]:{ file: { contents: e.target.value } } })}
               className="w-full h-full p-2 outline-none resize-none"
               />
             }
