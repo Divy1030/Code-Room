@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "../config/axios";
-import { initializeSocket, receiveMessage, sendMessage } from "../config/socket";
+import {
+  initializeSocket,
+  receiveMessage,
+  sendMessage,
+} from "../config/socket";
 import { UserContext } from "../context/user.context.jsx";
 import Markdown from "markdown-to-jsx";
-import hljs from "highlight.js";
-import "highlight.js/styles/github.css"; // Import a highlight.js style
+import hljs from 'highlight.js';
 
 const SyntaxHighlightedCode = ({ children, className }) => {
   const codeRef = useRef(null);
@@ -38,9 +41,9 @@ const Project = () => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const { user } = useContext(UserContext);
-  const [currentFile, setcurrentFile] = useState(null)
-  const [openFiles, setopenFiles] = useState([])
-  const [fileTree, setfileTree] = useState({})
+  const [currentFile, setcurrentFile] = useState(null);
+  const [openFiles, setopenFiles] = useState([]);
+  const [fileTree, setfileTree] = useState({});
   const messageBox = useRef(null);
   const socket = useRef(null);
 
@@ -93,8 +96,8 @@ const Project = () => {
     const handleMessage = (data) => {
       // console.log("Received message:", data);
       const message = JSON.parse(data.message);
-      if(message.fileTree){
-        setfileTree(message.fileTree)
+      if (message.fileTree) {
+        setfileTree(message.fileTree);
       }
       setMessages((prevMessages) => [...prevMessages, data]);
     };
@@ -176,25 +179,39 @@ const Project = () => {
             <i className="ri-add-fill mr-1 "></i>
             <p>Add Collaborators</p>
           </button>
-          <button className="p-2" onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}>
+          <button
+            className="p-2"
+            onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
+          >
             <i className="ri-group-fill"></i>
           </button>
         </header>
 
         <div className="conversion-area pt-14 pb-10 flex-grow flex flex-col h-full relative z-0">
-          <div ref={messageBox} className="message-box flex-grow flex flex-col gap-1 p-1 overflow-auto max-h-full">
+          <div
+            ref={messageBox}
+            className="message-box flex-grow flex flex-col gap-1 p-1 overflow-auto max-h-full"
+          >
             {messages.map((msg, index) => (
               <div
                 key={index}
                 className={`message max-w-56 flex flex-col gap-1 p-2 bg-slate-200 w-fit rounded-md ${
-                  msg.sender.email === user.user.email ? "ml-auto max-w-54" : "max-w-80"
+                  msg.sender.email === user.user.email
+                    ? "ml-auto max-w-54"
+                    : "max-w-80"
                 }`}
               >
                 <small className="text-xs opacity-65">
-                  {msg.sender.email === user.user.email ? "ME" : msg.sender.email}
+                  {msg.sender.email === user.user.email
+                    ? "ME"
+                    : msg.sender.email}
                 </small>
                 <div className="text-sm">
-                  {msg.sender._id === "ai" ? WriteAiMessage(msg.message) : <p>{msg.message}</p>}
+                  {msg.sender._id === "ai" ? (
+                    WriteAiMessage(msg.message)
+                  ) : (
+                    <p>{msg.message}</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -219,65 +236,104 @@ const Project = () => {
           } top-0 z-10`}
         >
           <header className="flex justify-end p-2 px-3 bg-slate-300">
-            <button className="p-2" onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}>
+            <button
+              className="p-2"
+              onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
+            >
               <i className="ri-close-fill"></i>
             </button>
           </header>
           <div className="users flex flex-col gap-2">
             {projectData.users &&
               projectData.users.map((user) => (
-                <div key={user._id} className="user cursor-pointer hover:bg-slate-200 p-2 flex gap-2 items-center">
+                <div
+                  key={user._id}
+                  className="user cursor-pointer hover:bg-slate-200 p-2 flex gap-2 items-center"
+                >
                   <div className="aspect-square rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600">
                     <i className="ri-user-fill absolute"></i>
                   </div>
-                  <h1 className="font-semibold text-lg text-black">{user.email}</h1>
+                  <h1 className="font-semibold text-lg text-black">
+                    {user.email}
+                  </h1>
                 </div>
               ))}
           </div>
         </div>
       </section>
 
-      <section className="right bg-red-50 flex-grow h-full flex ">
-        <div className="explorer h-full max-w-64 min-w-52  bg-slate-300">
-          <div className="filetree">
-            {
-              Object.keys(fileTree).map((file,index)=>(
-                <button 
-                onClick={()=>{
-                  setcurrentFile(file)
-                    setopenFiles((prevOpenFiles) => Array.from(new Set([...prevOpenFiles, file])))
+      <section className="right  bg-red-50 flex-grow h-full flex">
+        <div className="explorer h-full max-w-64 min-w-52 bg-slate-200">
+          <div className="file-tree w-full">
+            {Object.keys(fileTree).map((file, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setcurrentFile(file);
+                  setopenFiles([...new Set([...openFiles, file])]);
                 }}
-                className="tree-element cursor-pointer p-2 px-4 flex ">
-                  <p className="font-semibold text-lg">{file}</p>
-                </button>
-              ))
-            }
+                className="tree-element cursor-pointer p-2 px-4 flex items-center gap-2 bg-slate-300 w-full"
+              >
+                <p className="font-semibold text-lg">{file}</p>
+              </button>
+            ))}
           </div>
         </div>
-        {currentFile && (
-        <div className="code-editor flex flex-col flex-grow h-full">
-          <div className="top">
-            {
-              openFiles.map((file,index)=>(
-                <button 
-                onClick={()=>setcurrentFile(file)}
-                className={`tab p-2 px-4 ${currentFile===file?"bg-slate-200":""}`}>
+
+        <div className="code-editor flex flex-col flex-grow h-full shrink">
+          <div className="top flex justify-between w-full">
+            <div className="files flex">
+              {openFiles.map((file, index) => (
+                <button
+                  key={index}
+                  onClick={() => setcurrentFile(file)}
+                  className={`open-file cursor-pointer p-2 px-4 flex items-center w-fit gap-2 bg-slate-300 ${
+                    currentFile === file ? "bg-slate-400" : ""
+                  }`}
+                >
                   <p className="font-semibold text-lg">{file}</p>
                 </button>
-              ))
-            }
+              ))}
+            </div>
           </div>
-          <div className="bottom flex flex-grow">
-            {
-              <textarea 
-              value={fileTree[currentFile].file.contents}
-              onChange={(e)=>setfileTree({...fileTree,[currentFile]:{ file: { contents: e.target.value } } })}
-              className="w-full h-full p-2 outline-none resize-none"
-              />
-            }
+          <div className="bottom flex flex-grow max-w-full shrink overflow-auto">
+            {fileTree[currentFile] && (
+              <div className="code-editor-area h-full overflow-auto flex-grow bg-slate-50">
+                <pre className="hljs h-full">
+                  <code
+                    className="hljs h-full outline-none"
+                    contentEditable
+                    suppressContentEditableWarning
+                    onBlur={(e) => {
+                      const updatedContent = e.target.innerText;
+                      const ft = {
+                        ...fileTree,
+                        [currentFile]: {
+                          file: {
+                            content: updatedContent,
+                          },
+                        },
+                      };
+                      setfileTree(ft);
+                      setfileTree(ft);
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: hljs.highlight(
+                        "javascript",
+                        fileTree[currentFile].file.content
+                      ).value,
+                    }}
+                    style={{
+                      whiteSpace: "pre-wrap",
+                      paddingBottom: "25rem",
+                      counterSet: "line-numbering",
+                    }}
+                  />
+                </pre>
+              </div>
+            )}
           </div>
         </div>
-      )}
       </section>
 
       {isModalOpen && (
