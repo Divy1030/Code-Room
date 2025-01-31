@@ -128,7 +128,6 @@ const Project = () => {
 
     // Cleanup function to remove the event listener
     return () => {
-      // Properly remove the event listener
       if (socket.current) {
         socket.current.off("project-message", handleMessage);
       }

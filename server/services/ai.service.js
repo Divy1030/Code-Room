@@ -100,13 +100,13 @@ const model = genAI.getGenerativeModel({
 
 export const generateResult = async (prompt) => {
   try {
-    const result = await model.generateContent([prompt]); // Pass prompt as an array of strings
-    console.log("Result from generateContent:", result); // Log the result to inspect its structure
+    const result = await model.generateContent([prompt]);
+    console.log("Result from generateContent:", result); 
     if (result && result.response && result.response.candidates && result.response.candidates.length > 0) {
       const response = result.response.candidates[0];
-      console.log("Extracted response:", response); // Log the extracted response to debug
+      console.log("Extracted response:", response); 
       if (response.content && response.content.parts && response.content.parts.length > 0) {
-        return response.content.parts[0].text; // Return the text directly
+        return response.content.parts[0].text;
       } else {
         throw new Error("Unexpected response structure");
       }
